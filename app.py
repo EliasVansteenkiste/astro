@@ -28,16 +28,12 @@ def read_image(dataset, id):
     return image
 
 
-def get_labels():
-	df_train = pd.read_csv(pathfinder.DATA_PATH+'train.csv')
-	df_train = pd.concat([df_train['image_name'], df_train.tags.str.get_dummies(sep=' ')], axis=1)
-	return df_train
+def get_d_labels():
+	d_label =  get_pd_labels.set_index('SDSS_ID').T.to_dict('list')
+	return d_label
 
-def get_labels_array():
-	df = get_labels()
-	only_labels = df.drop(['image_name'], axis = 1, inplace = False)
-	only_labels = only_labels.as_matrix()
-	return only_labels
+def _test_get_labels():
+	print get_pd_labels().describe()
 	
 def chunkIt(seq, num):
   avg = len(seq) / float(num)
@@ -110,4 +106,5 @@ def make_stratified_split(no_folds=5, verbose=False):
 if __name__ == "__main__":
     _test_read_image()
     #make_stratified_split(verbose=True)
+    #_test_get_labels()
 
