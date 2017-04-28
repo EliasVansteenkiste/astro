@@ -6,20 +6,27 @@ import pathfinder
 
 rng = np.random.RandomState(37145)
 
-
+def _test_read_image():
+    print read_image('train', 1237648702966726812).shape
 
 def read_image(dataset, id):
-	if dataset == 'train':
-		prefix = 'train-tif/train_'
-	elif dataset == 'test':
-		prefix = 'test-tif/test_'
-	else:
-		raise
-	path = pathfinder.DATA_PATH + prefix + str(id) + '.tif'
-	image = io.imread(path)
-	image = np.swapaxes(image,0,2)
-	return image
-	
+    if dataset == 'train':
+        prefix = 'train-csv/train/'
+    elif dataset == 'test':
+        prefix = 'test-tif/test_'
+    else:
+        raise
+    csv_g_path = pathfinder.DATA_PATH + prefix + str(id) + '-g.csv'
+    csv_i_path = pathfinder.DATA_PATH + prefix + str(id) + '-i.csv'
+    i_data = pd.read_csv(csv_i_path)
+    g_data = pd.read_csv(csv_g_path)
+    # image = io.imread(path)
+    # image = np.swapaxes(image,0,2)
+    image = np.zeros((2, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
+    image[0] = i_data
+    image[1] = g_data
+    return image
+
 
 def get_labels():
 	df_train = pd.read_csv(pathfinder.DATA_PATH+'train.csv')
@@ -101,5 +108,6 @@ def make_stratified_split(no_folds=5, verbose=False):
 
 
 if __name__ == "__main__":
-	make_stratified_split(verbose=True)
+    _test_read_image()
+    #make_stratified_split(verbose=True)
 
