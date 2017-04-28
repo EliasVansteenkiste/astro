@@ -22,7 +22,7 @@ class DataGenerator(object):
         self.infinite = infinite
         self.full_batch = full_batch
 
-        self.labels = app.get_labels_array()
+        self.labels = app.get_d_labels()
 
     def generate(self):
         while True:

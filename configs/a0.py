@@ -18,7 +18,7 @@ rng = np.random.RandomState(42)
 # transformations
 p_transform = {'patch_size': (128, 128),
                'channels': 4,
-               'n_labels': 17}
+               'n_labels': 3}
 
 
 p_augmentation = {
@@ -140,7 +140,7 @@ def build_model(l_in=None):
 
     l = dense(drop(l), 128)
 
-    l_out = nn.layers.DenseLayer(l, num_units=p_transform['n_labels'],
+    l_out = nn.layers.DenseLayer(l, num_units=1,
                                  W=nn.init.Constant(0.),
                                  nonlinearity=nn.nonlinearities.sigmoid)
 
