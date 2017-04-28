@@ -13,15 +13,14 @@ def read_image(dataset, id):
     if dataset == 'train':
         prefix = 'train-csv/train/'
     elif dataset == 'test':
-        prefix = 'test-tif/test_'
+        prefix = 'test-csv/test/'
     else:
         raise
     csv_g_path = pathfinder.DATA_PATH + prefix + str(id) + '-g.csv'
     csv_i_path = pathfinder.DATA_PATH + prefix + str(id) + '-i.csv'
     i_data = pd.read_csv(csv_i_path)
     g_data = pd.read_csv(csv_g_path)
-    # image = io.imread(path)
-    # image = np.swapaxes(image,0,2)
+    
     image = np.zeros((2, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
     image[0] = i_data
     image[1] = g_data
