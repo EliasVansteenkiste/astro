@@ -64,6 +64,17 @@ no_augmentation_params = {
     'allow_stretch': False,
 }
 
+def ch_norm_center(x):
+    y = np.copy(x)
+    d1_slice = slice(x.shape[1]/4,x.shape[1]*3/4,1)
+    d2_slice = slice(x.shape[2]/4,x.shape[2]*3/4,1)
+    for ch in range(x.shape[0]):
+        p5 = np.percentile(x[ch,d1_slice,d2_slice],5)
+        p95 = np.percentile(x[ch,d1_slice,d2_slice],95)
+        y[ch] = (x[ch]-p5)/(p95-p5)
+        y[ch] = np.clip(y[ch],-1,2)
+    return y
+
 
 def tiling(img, tile_shape):
     tiles = []
@@ -146,7 +157,7 @@ def build_augmentation_transform(zoom=(1.0, 1.0), rotation=0, shear=0, translati
     tform_augment = skimage.transform.AffineTransform(scale=(1/zoom[0], 1/zoom[1]), rotation=np.deg2rad(rotation), shear=np.deg2rad(shear), translation=translation)
     return tform_augment
 
-def perturb(img, augmentation_params, target_shape, rng=rng, n_channels=4):
+def perturb(img, augmentation_params, target_shape, rng=rng, n_channels=2):
     # # DEBUG: draw a border to see where the image ends up
     # img[0, :] = 0.5
     # img[-1, :] = 0.5

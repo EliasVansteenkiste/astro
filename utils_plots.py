@@ -51,25 +51,17 @@ def plot_img(img, outfile):
 
     plt.figure(figsize=(5*(numBands+1), 5)) # One for the original image
     f = 1.0/(numBands+1)
+
+    # vmins = [-0.055199848488, -0.0194328497164]
+    # vmaxs = [0.229314997792, 0.0758158974349]
     for b in range(numBands):
         plt.axes( [b * f, 0, f, 1] )
-        plt.imshow(img[ b, :, :], cmap=plt.cm.viridis)
+        center = img.shape[1]/4, 
+        d1_slice = slice(img.shape[1]/4,img.shape[1]*3/4,1)
+        d2_slice = slice(img.shape[2]/4,img.shape[2]*3/4,1)
+        plt.imshow(img[ b, :, :], cmap=plt.cm.viridis, vmin=np.percentile(img[b,d1_slice,d2_slice],1), vmax=np.percentile(img[b,d1_slice,d2_slice],99))
         plt.xticks([]); plt.yticks([])
 
-    if numBands == 4:
-        img1 = img[ :-1, :, :].copy()
-        img1 = img1*255.0/img1.max()
-        img2 = np.zeros(np.shape(img1))
-        img2[0,:,:] = img1[2,:,:]
-        img2[1,:,:] = img1[1,:,:]
-        img2[2,:,:] = img1[0,:,:]
-        img2 = img2.astype(np.uint8)
-    else:
-        img2 = img
-
-    plt.axes( [(b+1) * f, 0, f, 1] )
-    plt.imshow(np.swapaxes(img2,0,2))
-    plt.xticks([]); plt.yticks([])
 
     plt.savefig(outfile)
     plt.close('all')

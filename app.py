@@ -1,19 +1,22 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 from skimage import io
+import os
 
 import pathfinder
 
 rng = np.random.RandomState(37145)
 
 def _test_read_image():
-    print read_image('train', 1237648702966726812).shape
+    img_ids = temporary_get_img_ids()
+    for img_id in img_ids:
+        print read_image('train', img_id).shape
 
 def read_image(dataset, id):
     if dataset == 'train':
-        prefix = 'train-csv/train/'
+        prefix = 'train-csv/'
     elif dataset == 'test':
-        prefix = 'test-csv/test/'
+        prefix = 'test-csv/'
     else:
         raise
     csv_g_path = pathfinder.DATA_PATH + prefix + str(id) + '-g.csv'
@@ -24,16 +27,31 @@ def read_image(dataset, id):
     image = np.zeros((2, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
     image[0] = i_data
     image[1] = g_data
+    print 'image.shape', image.shape
     return image
 
+def get_pd_labels(dataset = 'sample'):
+	df = pd.read_csv(pathfinder.DATA_PATH+dataset+'.csv', sep=';')
+	return df
 
 def get_d_labels():
-	d_label =  get_pd_labels.set_index('SDSS_ID').T.to_dict('list')
+	d_label =  get_pd_labels().set_index('SDSS_ID').T.to_dict('list')
 	return d_label
 
 def _test_get_labels():
 	print get_pd_labels().describe()
-	
+
+def temporary_get_img_ids():
+	filenames =  os.listdir(pathfinder.DATA_PATH+'train-csv')
+	img_ids = [int(x.split('.')[0].split('-')[0]) for x in filenames]
+	img_ids = list(set(img_ids))
+
+	return img_ids
+
+def make_random_split(img_ids,no_folds=3):
+	chunks = chunkIt(img_ids,no_folds)
+	return chunks
+
 def chunkIt(seq, num):
   avg = len(seq) / float(num)
   out = []
@@ -103,7 +121,12 @@ def make_stratified_split(no_folds=5, verbose=False):
 
 
 if __name__ == "__main__":
-    _test_read_image()
+	_test_read_image()
+    # print temporary_get_img_ids()
+    # folds = make_random_split(temporary_get_img_ids())
+    # print len(folds)
+    # for f in folds:
+    # 	print f
     #make_stratified_split(verbose=True)
     #_test_get_labels()
 
