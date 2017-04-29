@@ -55,7 +55,7 @@ def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
 
 
 # data iterators
-batch_size = 32
+batch_size = 64
 nbatches_chunk = 1
 chunk_size = batch_size * nbatches_chunk
 
@@ -94,12 +94,12 @@ validate_every = int(1. * nchunks_per_epoch)
 save_every = int(5. * nchunks_per_epoch)
 
 learning_rate_schedule = {
-    0: 5e-4,
-    int(max_nchunks * 0.5): 2e-4,
-    int(max_nchunks * 0.6): 1e-4,
-    int(max_nchunks * 0.7): 5e-5,
-    int(max_nchunks * 0.8): 2e-5,
-    int(max_nchunks * 0.9): 1e-5
+    0: 1e-4,
+    int(max_nchunks * 0.5): 5e-5,
+    int(max_nchunks * 0.6): 2.5e-5,
+    int(max_nchunks * 0.7): 1e-5,
+    int(max_nchunks * 0.8): 5e-6,
+    int(max_nchunks * 0.9): 2e-6
 }
 
 # model
