@@ -53,8 +53,8 @@ def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
 
 
 # data iterators
-batch_size = 1
-nbatches_chunk = 32
+batch_size = 32
+nbatches_chunk = 1
 chunk_size = batch_size * nbatches_chunk
 
 
