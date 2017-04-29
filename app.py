@@ -27,6 +27,8 @@ def read_image(dataset, id, n_channels = 2):
     image[0] = g_data
     if n_channels==2:
         i_data = pd.read_csv(csv_i_path)
+        if i_data.shape != g_data.shape:
+            print 'img id', id, 'i_data.shape', i_data.shape, 'g_data.shape', g_data.shape
         image[1] = i_data
     return image
 
