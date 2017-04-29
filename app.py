@@ -30,27 +30,39 @@ def read_image(dataset, id, n_channels = 2):
         image[1] = g_data
     return image
 
+works = ""
+def read_image_fast(dataset, id, n_channels = 2):
+    global works
+    try:
+        image_path = pathfinder.COMPRESSED_DATA_PATH + str(id) + '.npz'
+        image = np.load(image_path)['arr_0']
+        works = id
+    except:
+        return read_image_fast(dataset, works, n_channels = 2)
+
+    return image
+
 def get_pd_labels(dataset = 'train'):
-	df = pd.read_csv(pathfinder.DATA_PATH+dataset+'.csv', sep=';')
-	return df
+    df = pd.read_csv(pathfinder.DATA_PATH+dataset+'.csv', sep=';')
+    return df
 
 def get_d_labels():
-	d_label =  get_pd_labels().set_index('SDSS_ID').T.to_dict('list')
-	return d_label
+    d_label =  get_pd_labels().set_index('SDSS_ID').T.to_dict('list')
+    return d_label
 
 def _test_get_labels():
-	print get_pd_labels('train').describe()
+    print get_pd_labels('train').describe()
 
 def temporary_get_img_ids():
-	filenames =  os.listdir(pathfinder.DATA_PATH+'train-csv')
-	img_ids = [int(x.split('.')[0].split('-')[0]) for x in filenames]
-	img_ids = list(set(img_ids))
+    filenames =  os.listdir(pathfinder.DATA_PATH+'train-csv')
+    img_ids = [int(x.split('.')[0].split('-')[0]) for x in filenames]
+    img_ids = list(set(img_ids))
 
-	return img_ids
+    return img_ids
 
 def make_random_split(img_ids,no_folds=3):
-	chunks = chunkIt(img_ids,no_folds)
-	return chunks
+    chunks = chunkIt(img_ids,no_folds)
+    return chunks
 
 def chunkIt(seq, num):
   avg = len(seq) / float(num)
@@ -64,57 +76,57 @@ def chunkIt(seq, num):
   return out
 
 def top_occ(feat_comb, n_top = 5):
-	# a method for printing top occurences of feature combinations
-	# built for checking if split is stratified
-	n_total_samples = len(feat_comb)
-	feat_comb_occ = np.bincount(feat_comb)
-	top = feat_comb_occ.argsort()[-n_top:][::-1]
-	for idx, fc in enumerate(top):
-		print idx, fc, 1.0*feat_comb_occ[fc]/n_total_samples
-	print 'checksum', sum(feat_comb)
+    # a method for printing top occurences of feature combinations
+    # built for checking if split is stratified
+    n_total_samples = len(feat_comb)
+    feat_comb_occ = np.bincount(feat_comb)
+    top = feat_comb_occ.argsort()[-n_top:][::-1]
+    for idx, fc in enumerate(top):
+        print idx, fc, 1.0*feat_comb_occ[fc]/n_total_samples
+    print 'checksum', sum(feat_comb)
 
 def make_stratified_split(no_folds=5, verbose=False):
-	df = get_labels()
-	only_labels = df.drop(['image_name'], axis = 1, inplace = False)
-	only_labels = only_labels.as_matrix()
-	if verbose: print 'labels shape', only_labels.shape
-	feat_comb = only_labels.dot(1 << np.arange(only_labels.shape[-1] - 1, -1, -1))
-	feat_comb_set = set(feat_comb)
-	feat_comb_occ = np.bincount(feat_comb)
-	feat_comb_high = np.where(feat_comb_occ >= no_folds)[0]
-	n_total_samples = 0
-	folds = [[] for _ in range(no_folds)]
-	for fc in feat_comb_high:
-		idcs = np.where(feat_comb == fc)[0]
-		chunks = chunkIt(idcs,no_folds)
-		# print len(idcs), [len(chunk) for chunk in chunks]
-		rng.shuffle(chunks)
-		for idx, chunk in enumerate(chunks):
-			folds[idx].extend(chunk)
+    df = get_labels()
+    only_labels = df.drop(['image_name'], axis = 1, inplace = False)
+    only_labels = only_labels.as_matrix()
+    if verbose: print 'labels shape', only_labels.shape
+    feat_comb = only_labels.dot(1 << np.arange(only_labels.shape[-1] - 1, -1, -1))
+    feat_comb_set = set(feat_comb)
+    feat_comb_occ = np.bincount(feat_comb)
+    feat_comb_high = np.where(feat_comb_occ >= no_folds)[0]
+    n_total_samples = 0
+    folds = [[] for _ in range(no_folds)]
+    for fc in feat_comb_high:
+        idcs = np.where(feat_comb == fc)[0]
+        chunks = chunkIt(idcs,no_folds)
+        # print len(idcs), [len(chunk) for chunk in chunks]
+        rng.shuffle(chunks)
+        for idx, chunk in enumerate(chunks):
+            folds[idx].extend(chunk)
 
-	feat_comb_low = np.where(np.logical_and(feat_comb_occ < no_folds, feat_comb_occ > 0))[0]
-	low_idcs = []
-	for fc in feat_comb_low:
-		idcs = np.where(feat_comb == fc)[0]
-		low_idcs.extend(idcs)
+    feat_comb_low = np.where(np.logical_and(feat_comb_occ < no_folds, feat_comb_occ > 0))[0]
+    low_idcs = []
+    for fc in feat_comb_low:
+        idcs = np.where(feat_comb == fc)[0]
+        low_idcs.extend(idcs)
 
-	chunks = chunkIt(low_idcs,no_folds)
-	rng.shuffle(chunks)
-	for idx, chunk in enumerate(chunks):
-		folds[idx].extend(chunk)
+    chunks = chunkIt(low_idcs,no_folds)
+    rng.shuffle(chunks)
+    for idx, chunk in enumerate(chunks):
+        folds[idx].extend(chunk)
 
 
-	n_samples_fold = 0
-	for f in folds:
-		n_samples_fold += len(f)
+    n_samples_fold = 0
+    for f in folds:
+        n_samples_fold += len(f)
 
-	if verbose:
-		print 'n_samples_fold', n_samples_fold
-		top_occ(feat_comb)
-		for f in folds:
-			top_occ(feat_comb[f])
+    if verbose:
+        print 'n_samples_fold', n_samples_fold
+        top_occ(feat_comb)
+        for f in folds:
+            top_occ(feat_comb[f])
 
-	return folds
+    return folds
 
 
 def get_bad_img_ids():
