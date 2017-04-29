@@ -165,29 +165,17 @@ def build_model(l_in=None):
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
 
-# def build_objective(model, deterministic=False):
-#     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
-#     targets = nn.layers.get_output(model.l_target)[:,0]
-#     errors = nn.layers.get_output(model.l_target)[:,1]
-    
-#     common_exp = 10.5
-#     qpred = 2.*predictions - errors - common_exp
-#     qtarg = 2.*targets - errors - common_exp
-#     mix_pred_targ = targets + predictions - errors - common_exp
-
-#     objectives = 10.**qpred + 10.**qtarg -2.*10.**mix_pred_targ
-#     objective = T.mean(objectives)
-#     return objective
-
-
 def build_objective(model, deterministic=False):
     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
     targets = nn.layers.get_output(model.l_target)[:,0]
     errors = nn.layers.get_output(model.l_target)[:,1]
+    
+    common_exp = 10.5
+    exp1 = 2.*predictions - errors - common_exp
 
-    objectives = lasagne.objectives.squared_error(predictions,targets)
-    ojbective = lasagne.objectives.aggregate(objectives, weights=10**errors, mode='mean')
-    return ojbective
+    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (10**errors-10**(-errors))
+    objective = T.mean(objectives)
+    return objective
 
 def build_updates(train_loss, model, learning_rate):
     updates = nn.updates.adam(train_loss, nn.layers.get_all_params(model.l_out, trainable=True), learning_rate)

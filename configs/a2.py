@@ -31,10 +31,6 @@ p_augmentation = {
 }
 
 
-channel_zmuv_stats = {
-    'avg': [4970.55, 4245.35, 3064.64, 6360.08],
-    'std': [1785.79, 1576.31, 1661.19, 1841.09]}
-
 # data preparation function
 def data_prep_function_train(x, p_transform=p_transform, p_augmentation=p_augmentation, **kwargs):
     x = data_transforms.ch_norm_center(x)
@@ -55,7 +51,7 @@ def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
 
 
 # data iterators
-batch_size = 64
+batch_size = 512
 nbatches_chunk = 1
 chunk_size = batch_size * nbatches_chunk
 
@@ -106,12 +102,12 @@ validate_every = int(1. * nchunks_per_epoch)
 save_every = int(5. * nchunks_per_epoch)
 
 learning_rate_schedule = {
-    0: 1e-4,
-    int(max_nchunks * 0.5): 5e-5,
-    int(max_nchunks * 0.6): 2.5e-5,
-    int(max_nchunks * 0.7): 1e-5,
-    int(max_nchunks * 0.8): 5e-6,
-    int(max_nchunks * 0.9): 2e-6
+    0: 1e-1,
+    int(max_nchunks * 0.5): 5e-4,
+    int(max_nchunks * 0.6): 2.5e-4,
+    int(max_nchunks * 0.7): 1e-4,
+    int(max_nchunks * 0.8): 5e-5,
+    int(max_nchunks * 0.9): 2e-5
 }
 
 # model
@@ -165,29 +161,19 @@ def build_model(l_in=None):
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
 
-# def build_objective(model, deterministic=False):
-#     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
-#     targets = nn.layers.get_output(model.l_target)[:,0]
-#     errors = nn.layers.get_output(model.l_target)[:,1]
-    
-#     common_exp = 10.5
-#     qpred = 2.*predictions - errors - common_exp
-#     qtarg = 2.*targets - errors - common_exp
-#     mix_pred_targ = targets + predictions - errors - common_exp
-
-#     objectives = 10.**qpred + 10.**qtarg -2.*10.**mix_pred_targ
-#     objective = T.mean(objectives)
-#     return objective
-
-
 def build_objective(model, deterministic=False):
     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
     targets = nn.layers.get_output(model.l_target)[:,0]
     errors = nn.layers.get_output(model.l_target)[:,1]
+    
+    common_exp = 10.5
+    exp1 = 2.*predictions - errors - common_exp
 
-    objectives = lasagne.objectives.squared_error(predictions,targets)
-    ojbective = lasagne.objectives.aggregate(objectives, weights=10**errors, mode='mean')
-    return ojbective
+    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (10**errors-10**(-errors))
+    objective = T.mean(objectives)
+    return objective
+
+
 
 def build_updates(train_loss, model, learning_rate):
     updates = nn.updates.adam(train_loss, nn.layers.get_all_params(model.l_out, trainable=True), learning_rate)
