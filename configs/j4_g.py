@@ -19,7 +19,7 @@ rng = np.random.RandomState(42)
 
 # transformations
 p_transform = {'patch_size': (64, 64),
-               'channels': 2,
+               'channels': 1,
                'n_labels': 3}
 
 
@@ -36,7 +36,7 @@ p_augmentation = {
 # data preparation function
 def data_prep_function_train(x, p_transform=p_transform, p_augmentation=p_augmentation, **kwargs):
     x = data_transforms.ch_norm_center(x)
-    x = data_transforms.perturb(x, p_augmentation, p_transform['patch_size'], rng)
+    x = data_transforms.perturb(x, p_augmentation, p_transform['patch_size'], rng, n_channels=p_transform["channels"])
     return x
 
 def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
@@ -48,7 +48,7 @@ def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
 
     d1 = slice(x.shape[1]/2-d1_r,x.shape[1]/2+d1_r,1)
     d2 = slice(x.shape[2]/2-d2_r,x.shape[2]/2+d2_r,1)
-    x = x[:,d1,d2]
+    x = x[0,d1,d2]
     return x
 
 
@@ -59,10 +59,10 @@ chunk_size = batch_size * nbatches_chunk
 
 
 all_ids = app.temporary_get_img_ids()
-folds = app.make_random_split(all_ids, no_folds=3)
+folds = app.make_random_split(all_ids, no_folds=20)
 print len(folds)
-train_ids = folds[0] + folds[1]
-valid_ids = folds[2]
+train_ids = sum(folds[1:],[])
+valid_ids = folds[0]
 
 bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 1237651755092148341, 1237660634909835612, 1237679167157895402, 1237661083199079644, 1237652946384257075, 1237679167157895402, 
 1237661059574464751,
@@ -102,7 +102,7 @@ valid_data_iterator = data_iterators.DataGenerator(dataset='train',
 nchunks_per_epoch = train_data_iterator.nsamples / chunk_size if train_data_iterator.nsamples > chunk_size else 1
 max_nchunks = 25 * nchunks_per_epoch
 
-validate_every = int(5 * nchunks_per_epoch)
+validate_every = int(0.1 * nchunks_per_epoch)
 save_every = int(0.1 * nchunks_per_epoch)
 
 learning_rate_schedule = {
@@ -116,9 +116,17 @@ learning_rate_schedule = {
 # model
 conv = partial(dnn.Conv2DDNNLayer,
                  filter_size=3,
-                 pad='same',
+                 pad='valid',
                  W=nn.init.Orthogonal(),
                  nonlinearity=nn.nonlinearities.very_leaky_rectify)
+
+
+conv_dense = partial(dnn.Conv2DDNNLayer,
+                 filter_size=1,
+                 pad='valid',
+                 W=nn.init.Orthogonal(),
+                 nonlinearity=nn.nonlinearities.very_leaky_rectify)
+
 
 max_pool = partial(dnn.MaxPool2DDNNLayer,
                      pool_size=2)
@@ -136,10 +144,6 @@ def build_model(l_in=None):
     l_target = nn.layers.InputLayer((None,p_transform['n_labels']))
 
     l = conv(l_in, 64)
-    l = conv(l, 64)
-    l = max_pool(l)
-
-    l = conv(l, 64)
     l = conv(l, 64)
     l = max_pool(l)
 
@@ -174,7 +178,7 @@ def build_objective(model, deterministic=False):
     ten_pt = 10.**(predictions-targets)
     objectives = (1 - ten_pt)**2 / (np.float32(np.log(10.))*errors)**2
     objective = T.mean(objectives)
-    theano_printer.print_me_this('err', T.mean(predictions-targets))
+    # theano_printer.print_me_this('err', T.mean(predictions-targets))
     # theano_printer.print_me_this('targets', nn.layers.get_output(model.l_target))
     # theano_printer.print_me_this('errors', errors)
     # theano_printer.print_me_this('objective', objective)

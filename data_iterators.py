@@ -6,6 +6,9 @@ import utils
 import app
 import buffering
 
+import socket
+hn = socket.gethostname()
+
 class DataGenerator(object):
     def __init__(self, dataset, batch_size, img_ids, p_transform, data_prep_fun, rng,
                  random, infinite, full_batch, **kwargs):
@@ -45,9 +48,7 @@ class DataGenerator(object):
                     img_id = self.img_ids[idx]
                     batch_ids.append(img_id)
                     #print i, idx, img_id,
-                    import socket
-                    hn = socket.gethostname()
-                    if hn=="hond":
+                    if hn=="hond" or hn=="kat":
                         img = app.read_image_fast(self.dataset, img_id, self.p_transform['channels'])
                     else:
                         img = app.read_image(self.dataset, img_id, self.p_transform['channels'])
