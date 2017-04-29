@@ -21,13 +21,13 @@ def read_image(dataset, id, n_channels = 2):
         raise
     csv_g_path = pathfinder.DATA_PATH + prefix + str(id) + '-g.csv'
     csv_i_path = pathfinder.DATA_PATH + prefix + str(id) + '-i.csv'
-    i_data = pd.read_csv(csv_i_path)
     g_data = pd.read_csv(csv_g_path)
     
     image = np.zeros((n_channels, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
-    image[0] = i_data
+    image[0] = g_data
     if n_channels==2:
-        image[1] = g_data
+        g_data = pd.read_csv(csv_i_path)
+        image[1] = i_data
     return image
 
 def get_pd_labels(dataset = 'train'):

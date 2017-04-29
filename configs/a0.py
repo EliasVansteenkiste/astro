@@ -66,7 +66,19 @@ print len(folds)
 train_ids = folds[0] + folds[1]
 valid_ids = folds[2]
 
-bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 1237651755092148341]
+bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 1237651755092148341, 1237660634909835612, 1237679167157895402, 1237661083199079644, 1237652946384257075, 1237679167157895402, 
+1237661059574464751,
+1237667106885665484,
+1237661435384365240,
+1237667912749678730,
+1237664853650178099,
+1237656538053083251,
+1237662337871577447,
+1237667255063412964,
+1237648705137934473,
+1237652936184102946,
+1237673705576202561, 1237652947995066417, 1237663784743731586]
+
 train_ids = [x for x in train_ids if x not in bad_ids]
 valid_ids = [x for x in valid_ids if x not in bad_ids]
 
@@ -152,20 +164,6 @@ def build_model(l_in=None):
 
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
-
-# def build_objective(model, deterministic=False):
-#     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
-#     targets = nn.layers.get_output(model.l_target)[:,0]
-#     errors = nn.layers.get_output(model.l_target)[:,1]
-    
-#     common_exp = 10.5
-#     qpred = 2.*predictions - errors - common_exp
-#     qtarg = 2.*targets - errors - common_exp
-#     mix_pred_targ = targets + predictions - errors - common_exp
-
-#     objectives = 10.**qpred + 10.**qtarg -2.*10.**mix_pred_targ
-#     objective = T.mean(objectives)
-#     return objective
 
 
 def build_objective(model, deterministic=False):
