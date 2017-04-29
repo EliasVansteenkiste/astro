@@ -6,6 +6,7 @@ import numpy as np
 import glob
 import os
 import cPickle as pickle
+import csv
 
 maxfloat = np.finfo(np.float32).max
 
@@ -36,7 +37,7 @@ def get_train_valid_split(train_data_path):
 
 def check_data_paths(data_path):
     if not os.path.isdir(data_path):
-        raise ValueError('path is not a directory '+data_path)
+        raise ValueError('path is not a directory ' + data_path)
 
 
 def get_dir_path(dir_name, root_dir, no_name=False):
@@ -115,3 +116,16 @@ def current_learning_rate(schedule, idx):
 
 def get_script_name(file_path):
     return os.path.basename(file_path).replace('.py', '')
+
+
+def write_submission(pid2prediction, submission_path):
+    """
+    :param pid2prediction: dict of {patient_id: label}
+    :param submission_path:
+    """
+    f = open(submission_path, 'w+')
+    fo = csv.writer(f, lineterminator='\n')
+    fo.writerow(['pssid', 'mass'])
+    for pid in pid2prediction.keys():
+        fo.writerow([pid, pid2prediction[pid]])
+    f.close()

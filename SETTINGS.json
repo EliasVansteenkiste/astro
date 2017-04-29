@@ -2,7 +2,9 @@
   "DATA_PATH": "/data/astro/",
   "COMPRESSED_DATA_PATH": "/data/astro/compressed/",
   "METADATA_PATH": "/mnt/storage/metadata/astro/",
-  "SAMPLE_SUBMISSION_PATH": "/data/astro/sample_submission.csv"
+  "SAMPLE_SUBMISSION_PATH": "/data/astro/sample_submission.csv",
+  "TEST_DISTANCE": "Test_Distance.csv",
+  "TEST_IDS": "validationdata_SDSSID.csv"
 }
 
 
