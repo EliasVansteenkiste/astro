@@ -121,6 +121,9 @@ def get_bad_img_ids():
     bad_img_ids = []
     for line in open('bad_img_ids.lst') :
         bad_img_ids.append(int(line.split(';')[0]))
+    for line in open('bad_img_ids2.lst') :
+        bad_img_ids.append(int(line.split(';')[0]))
+
     return bad_img_ids
 
 
