@@ -75,6 +75,6 @@ for n, (x_chunk, y_chunk, id_chunk) in enumerate(buffering.buffered_gen_threaded
     y_shared.set_value(y_chunk)
     predictions = iter_get_predictions()
     for i in xrange(predictions.shape[0]):
-        pid2prediction[id_chunk[i]] = predictions[i]
+        pid2prediction[id_chunk[i]] = predictions[i][0]
 
 utils.write_submission(pid2prediction, submission_path=output_csv_file)

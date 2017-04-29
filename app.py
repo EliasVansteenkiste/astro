@@ -36,6 +36,7 @@ def read_image_fast(dataset, id, n_channels = 2):
 
     image_path = pathfinder.COMPRESSED_DATA_PATH + str(id) + '.npz'
     image = np.load(image_path)['arr_0']
+    works = id
 
     return image
 
@@ -46,6 +47,22 @@ def get_pd_labels(dataset = 'train'):
 def get_d_labels():
     d_label =  get_pd_labels().set_index('SDSS_ID').T.to_dict('list')
     return d_label
+
+def get_test_ids(dataset='validationdata_SDSSID'):
+    img_ids = []
+    with open(pathfinder.DATA_PATH+dataset+'.csv') as f: 
+        for line in f.readlines():
+            img_ids.append(int(line.rstrip()))
+    return img_ids
+
+def get_test_d_dist(dataset='Test_Distance'):
+    df = pd.read_csv(pathfinder.DATA_PATH+dataset+'.csv', sep=';')
+    d_dist =  df.set_index('SDSS_ID').T.to_dict('list')
+    return d_dist
+
+def get_target_test(img_id, d_dist):
+    return np.array([0., 0., np.float32(d_dist[img_id])])
+
 
 def _test_get_labels():
     print get_pd_labels('train').describe()
@@ -138,21 +155,22 @@ def get_bad_img_ids():
 
 
 if __name__ == "__main__":
-    bad_img_ids = get_bad_img_ids()
-    d_labels = get_d_labels()
+    # bad_img_ids = get_bad_img_ids()
+    # d_labels = get_d_labels()
 
-    masses = []
-    errors = []
-    distances = []
-    for img_id, lv in d_labels.iteritems():
-        if img_id not in bad_img_ids:
-            masses.append(lv[0])
-            errors.append(lv[1])
-            distances.append(lv[2])
+    # masses = []
+    # errors = []
+    # distances = []
+    # for img_id, lv in d_labels.iteritems():
+    #     if img_id not in bad_img_ids:
+    #         masses.append(lv[0])
+    #         errors.append(lv[1])
+    #         distances.append(lv[2])
 
-    print 'mass', np.amin(masses), np.amax(masses), np.average(masses)
-    print 'errors', np.amin(errors), np.amax(errors), np.average(errors)
-    print 'distances', np.amin(distances), np.amax(distances), np.average(distances)
+    # print 'mass', np.amin(masses), np.amax(masses), np.average(masses)
+    # print 'errors', np.amin(errors), np.amax(errors), np.average(errors)
+    # print 'distances', np.amin(distances), np.amax(distances), np.average(distances)
+    get_pd_test()
 
 
 
