@@ -46,7 +46,7 @@ class DataGenerator(object):
                     batch_ids.append(img_id)
                     #print i, idx, img_id,
 
-                    img = app.read_image_fast(self.dataset, img_id, self.p_transform['channels'])
+                    img = app.read_image(self.dataset, img_id, self.p_transform['channels'])
                     x_batch[i] = self.data_prep_fun(x=img)
                     y_batch[i] = self.labels[img_id]
                     #print y_batch[i]
