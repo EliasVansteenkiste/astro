@@ -59,7 +59,7 @@ givens_test[model.l_in.input_var] = x_shared
 givens_test[model.l_target.input_var] = y_shared
 
 # theano functions
-iter_get_predictions = theano.function([], nn.layers.get_output(model.l_out, deterministic=True),
+iter_get_predictions = theano.function([], config().get_preds(model),
                                        givens=givens_test)
 
 test_data_iterator = config().test_data_iterator
