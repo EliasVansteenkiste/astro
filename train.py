@@ -110,10 +110,8 @@ tmp_losses_train = []
 losses_train_print = []
 
 # use buffering.buffered_gen_threaded()
-for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, 
-        train_data_iterator.generate()):
-# for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buffering.buffered_gen_threaded(
-#         train_data_iterator.generate())):
+for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buffering.buffered_gen_threaded(
+        train_data_iterator.generate(), buffer_size=128)):
     if chunk_idx in learning_rate_schedule:
         lr = np.float32(learning_rate_schedule[chunk_idx])
         print '  setting learning rate to %.7f' % lr
