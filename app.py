@@ -30,15 +30,11 @@ def read_image(dataset, id, n_channels = 2):
         image[1] = i_data
     return image
 
-works = ""
 def read_image_fast(dataset, id, n_channels = 2):
-    global works
-    try:
-        image_path = pathfinder.COMPRESSED_DATA_PATH + str(id) + '.npz'
-        image = np.load(image_path)['arr_0']
-        works = id
-    except:
-        return read_image_fast(dataset, works, n_channels = 2)
+
+    image_path = pathfinder.COMPRESSED_DATA_PATH + str(id) + '.npz'
+    image = np.load(image_path)['arr_0']
+    works = id
 
     return image
 
