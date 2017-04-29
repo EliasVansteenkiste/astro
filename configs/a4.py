@@ -11,6 +11,7 @@ import data_iterators
 import pathfinder
 import utils
 import app
+import app_layers
 
 restart_from_save = None
 rng = np.random.RandomState(42)
@@ -22,7 +23,7 @@ p_transform = {'patch_size': (64, 64),
 
 
 p_augmentation = {
-    'zoom_range': (1 / 1.1, 1.1),
+    'zoom_range': (1, 1),
     'rotation_range': (0, 360),
     'shear_range': (0, 0),
     'translation_range': (-4, 4),
@@ -102,12 +103,12 @@ validate_every = int(5. * nchunks_per_epoch)
 save_every = int(5. * nchunks_per_epoch)
 
 learning_rate_schedule = {
-    0: 1e-5,
-    int(max_nchunks * 0.5): 5e-6,
-    int(max_nchunks * 0.6): 2.5e-6,
-    int(max_nchunks * 0.7): 1e-6,
-    int(max_nchunks * 0.8): 5e-7,
-    int(max_nchunks * 0.9): 2e-7
+    0: 1e-4,
+    int(max_nchunks * 0.5): 5e-5,
+    int(max_nchunks * 0.6): 2.5e-5,
+    int(max_nchunks * 0.7): 1e-5,
+    int(max_nchunks * 0.8): 5e-6,
+    int(max_nchunks * 0.9): 2e-6
 }
 
 # model
@@ -153,10 +154,15 @@ def build_model(l_in=None):
     l = max_pool(l)
 
     l = dense(drop(l), 128)
+    l_dist = app_layers.LogDistLayer(l_target)
+
+    l = nn.layers.ConcatLayer([l, l_dist])
 
     l_out = nn.layers.DenseLayer(l, num_units=1,
                                  W=nn.init.Constant(0.),
-                                 nonlinearity=nn.nonlinearities.identity)
+                                 nonlinearity=nn.nonlinearities.softplus)
+
+
 
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
@@ -165,12 +171,11 @@ def build_objective(model, deterministic=False, epsilon=1e-12):
     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
     targets = nn.layers.get_output(model.l_target)[:,0]
     errors = nn.layers.get_output(model.l_target)[:,1]
-    
-    common_exp = 10.5
-    exp1 = 2.*predictions - errors - common_exp
 
-    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (np.float32(np.log(10))*errors + epsilon)
-    objective = T.mean(objectives)
+    weights = np.float32(1.)/(np.float32(np.log(10)) * errors * np.float32(10.)**(targets-np.float32(10.5)))
+
+    objectives = nn.objectives.squared_error(predictions,targets)
+    objective = nn.objectives.aggregate(objectives, weights=weights, mode='mean')
     return objective
 
 
