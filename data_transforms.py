@@ -64,13 +64,26 @@ no_augmentation_params = {
     'allow_stretch': False,
 }
 
+def apply_f_on_patch(x, f,patch_delta=8):
+    rs = []
+    d1_slice = slice((x.shape[1]/2)-patch_delta, (x.shape[1]/2)+patch_delta, 1)
+    d2_slice = slice((x.shape[2]/2)-patch_delta, (x.shape[2]/2)+patch_delta, 1)
+    #print d1_slice,d2_slice,x.shape
+    for ch in range(x.shape[0]):
+        rs.append(f(x[ch, d1_slice, d2_slice]))
+    return rs
+
 def ch_norm_center(x):
     y = np.copy(x)
     d1_slice = slice(x.shape[1]/4,x.shape[1]*3/4,1)
     d2_slice = slice(x.shape[2]/4,x.shape[2]*3/4,1)
+    maxs = apply_f_on_patch(x, f=lambda x: np.percentile(x,99) ,patch_delta=8)
+    mins = apply_f_on_patch(x, f=np.min,patch_delta=32)
+    #print maxs
+    
     for ch in range(x.shape[0]):
-        p5 = np.percentile(x[ch,d1_slice,d2_slice],5)
-        p95 = np.percentile(x[ch,d1_slice,d2_slice],95)
+        p5 = mins[ch] #np.percentile(x[ch,d1_slice,d2_slice],5)
+        p95 = maxs[ch] #np.percentile(x[ch,d1_slice,d2_slice],95)
         y[ch] = (x[ch]-p5)/(p95-p5)
         y[ch] = np.clip(y[ch],-1,2)
     return y
