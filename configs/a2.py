@@ -161,7 +161,7 @@ def build_model(l_in=None):
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
 
-def build_objective(model, deterministic=False):
+def build_objective(model, deterministic=False, epsilon=1e-12):
     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
     targets = nn.layers.get_output(model.l_target)[:,0]
     errors = nn.layers.get_output(model.l_target)[:,1]
@@ -169,7 +169,7 @@ def build_objective(model, deterministic=False):
     common_exp = 10.5
     exp1 = 2.*predictions - errors - common_exp
 
-    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (10**errors-10**(-errors))
+    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (np.float32(np.log(10))*errors + epsilon)
     objective = T.mean(objectives)
     return objective
 

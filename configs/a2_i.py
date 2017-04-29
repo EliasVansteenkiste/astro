@@ -173,7 +173,7 @@ def build_objective(model, deterministic=False):
     common_exp = 10.5
     exp1 = 2.*predictions - errors - common_exp
 
-    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (10**errors-10**(-errors))
+    objectives = (10.**exp1 + 10.**(targets-common_exp) -2.*10.**(predictions-common_exp)) / (np.log(10)*errors)
     objective = T.mean(objectives)
     return objective
 
