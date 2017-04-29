@@ -7,9 +7,11 @@ import lasagne as nn
 import numpy as np
 import theano
 from datetime import datetime, timedelta
+import theano_printer
 import utils
 import logger
 import theano.tensor as T
+import theano.printing
 import buffering
 from configuration import config, set_configuration
 import pathfinder
@@ -71,7 +73,9 @@ givens_valid[model.l_in.input_var] = x_shared
 givens_valid[model.l_target.input_var] = y_shared
 
 # theano functions
-iter_train = theano.function([idx], [train_loss, nn.layers.get_output(model.l_out)], givens=givens_train, updates=updates)
+# theano_printer.print_me_this('grad', sum([p.norm(L=1) for p in theano.grad(train_loss, nn.layers.get_all_params(model.l_out, trainable=True))])   )
+
+iter_train = theano.function([idx], [train_loss, nn.layers.get_output(model.l_out)]+theano_printer.get_the_stuff_to_print(), givens=givens_train, updates=updates)
 iter_validate = theano.function([], valid_loss, givens=givens_valid)
 
 if config().restart_from_save:
@@ -111,8 +115,10 @@ losses_train_print = []
 losses_time_print = []
 
 # use buffering.buffered_gen_threaded()
-for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buffering.buffered_gen_threaded(
-        train_data_iterator.generate(), buffer_size=128)):
+# for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buffering.buffered_gen_threaded(
+#         train_data_iterator.generate(), buffer_size=config().batch_size)):
+
+for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, train_data_iterator.generate()):
     if chunk_idx in learning_rate_schedule:
         lr = np.float32(learning_rate_schedule[chunk_idx])
         print '  setting learning rate to %.7f' % lr
@@ -126,7 +132,8 @@ for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buff
     # make nbatches_chunk iterations
     for b in xrange(config().nbatches_chunk):
         losses_time_print.append(time.time())
-        loss, pred = iter_train(b)
+        res = iter_train(b)
+        loss, pred = res[0], res[1]
         #print loss, pred 
         tmp_losses_train.append(loss)
         losses_train_print.append(loss)
