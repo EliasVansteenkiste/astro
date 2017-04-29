@@ -66,7 +66,7 @@ print len(folds)
 train_ids = folds[0] + folds[1]
 valid_ids = folds[2]
 
-bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 1237651755092148341]
+bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 1237651755092148341, 1237660634909835612, 1237679167157895402]
 train_ids = [x for x in train_ids if x not in bad_ids]
 valid_ids = [x for x in valid_ids if x not in bad_ids]
 
