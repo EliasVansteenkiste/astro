@@ -24,10 +24,10 @@ p_transform = {'patch_size': (64, 64),
 
 
 p_augmentation = {
-    'zoom_range': (1 / 1.1, 1.1),
+    'zoom_range': (1.,1.),
     'rotation_range': (0, 360),
     'shear_range': (0, 0),
-    'translation_range': (-4, 4),
+    'translation_range': (0, 0),
     'do_flip': True,
     'allow_stretch': False,
 }
@@ -53,8 +53,8 @@ def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
 
 
 # data iterators
-batch_size = 4
-nbatches_chunk = 128
+batch_size = 1
+nbatches_chunk = 32
 chunk_size = batch_size * nbatches_chunk
 
 
@@ -99,7 +99,7 @@ valid_data_iterator = data_iterators.DataGenerator(dataset='train',
                                                     rng=rng,
                                                     full_batch=False, random=False, infinite=False)
 
-nchunks_per_epoch = train_data_iterator.nsamples / chunk_size
+nchunks_per_epoch = train_data_iterator.nsamples / chunk_size if train_data_iterator.nsamples > chunk_size else 1
 max_nchunks = 25 * nchunks_per_epoch
 
 validate_every = int(5 * nchunks_per_epoch)
@@ -107,10 +107,10 @@ save_every = int(5 * nchunks_per_epoch)
 
 learning_rate_schedule = {
     0:    0.001,
-    5 * nchunks_per_epoch:    0.0003,
-    10 * nchunks_per_epoch:    0.0001,
-    15 * nchunks_per_epoch:    0.00003,
-    20 * nchunks_per_epoch:    0.00001,
+    5 * nchunks_per_epoch:    0.003,
+    10 * nchunks_per_epoch:    0.001,
+    15 * nchunks_per_epoch:    0.0003,
+    20 * nchunks_per_epoch:    0.0001,
 }
 
 # model
@@ -137,12 +137,26 @@ def build_model(l_in=None):
 
     l = conv(l_in, 64)
     l = conv(l, 64)
-    l = max_pool(l, pool_size=32)
+    l = max_pool(l)
 
-    l = dense(drop(l), 128)
+    l = conv(l, 64)
+    l = conv(l, 64)
+    l = max_pool(l)
+
+    l = conv(l, 64)
+    l = conv(l, 64)
+    l = max_pool(l)
+
+    l = conv(l, 64)
+    l = conv(l, 64)
+    l = max_pool(l)
+
+    # l = drop(l)
+
+    l = dense(l, 128)
 
     l_out = nn.layers.DenseLayer(l, num_units=1,
-                                 W=nn.init.Constant(0.),b=nn.init.Constant(9),
+                                 W=nn.init.Constant(0.),b=nn.init.Constant(5.5),
                                  nonlinearity=nn.nonlinearities.identity)
 
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
@@ -152,15 +166,20 @@ def build_objective(model, deterministic=False):
     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
     targets = nn.layers.get_output(model.l_target)[:,0]
     errors = nn.layers.get_output(model.l_target)[:,1]
+    distance = nn.layers.get_output(model.l_target)[:,2]
+
+    predictions += 2*T.log(distance) / np.float32(np.log(10))
+
 
     ten_pt = 10.**(predictions-targets)
     objectives = (1 - ten_pt)**2 / (np.float32(np.log(10.))*errors)**2
     objective = T.mean(objectives)
-    # theano_printer.print_me_this('predictions', predictions)
-    # theano_printer.print_me_this('targets', targets)
+    theano_printer.print_me_this('err', T.mean(predictions-targets))
+    # theano_printer.print_me_this('targets', nn.layers.get_output(model.l_target))
     # theano_printer.print_me_this('errors', errors)
     # theano_printer.print_me_this('objective', objective)
     return objective
+
 
 def fixed_norm_constraint(tensor_vars, max_norm, epsilon=0,
                           return_norm=False):
