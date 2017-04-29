@@ -17,7 +17,7 @@ rng = np.random.RandomState(42)
 
 # transformations
 p_transform = {'patch_size': (64, 64),
-               'channels': 1,
+               'channels': 2,
                'n_labels': 3}
 
 
@@ -38,7 +38,7 @@ channel_zmuv_stats = {
 # data preparation function
 def data_prep_function_train(x, p_transform=p_transform, p_augmentation=p_augmentation, **kwargs):
     x = data_transforms.ch_norm_center(x)
-    x = data_transforms.perturb(x, p_augmentation, p_transform['patch_size'], rng, p_transform['channels'])
+    x = data_transforms.perturb(x, p_augmentation, p_transform['patch_size'], rng)
     return x
 
 def data_prep_function_valid(x, p_transform=p_transform, **kwargs):
@@ -77,7 +77,7 @@ bad_ids = app.get_bad_img_ids() + [1237665532796272810, 1237667106885665484, 123
 1237667255063412964,
 1237648705137934473,
 1237652936184102946,
-1237673705576202561, 1237652947995066417, 1237663784743731586]
+1237673705576202561, 1237652947995066417]
 
 train_ids = [x for x in train_ids if x not in bad_ids]
 valid_ids = [x for x in valid_ids if x not in bad_ids]
@@ -164,6 +164,20 @@ def build_model(l_in=None):
 
     return namedtuple('Model', ['l_in', 'l_out', 'l_target'])(l_in, l_out, l_target)
 
+
+# def build_objective(model, deterministic=False):
+#     predictions = nn.layers.get_output(model.l_out, deterministic=deterministic)
+#     targets = nn.layers.get_output(model.l_target)[:,0]
+#     errors = nn.layers.get_output(model.l_target)[:,1]
+    
+#     common_exp = 10.5
+#     qpred = 2.*predictions - errors - common_exp
+#     qtarg = 2.*targets - errors - common_exp
+#     mix_pred_targ = targets + predictions - errors - common_exp
+
+#     objectives = 10.**qpred + 10.**qtarg -2.*10.**mix_pred_targ
+#     objective = T.mean(objectives)
+#     return objective
 
 
 def build_objective(model, deterministic=False):
