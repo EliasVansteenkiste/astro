@@ -13,6 +13,9 @@ utils.check_data_paths(METADATA_PATH)
 DATA_PATH = paths["DATA_PATH"]
 utils.check_data_paths(DATA_PATH)
 
+COMPRESSED_DATA_PATH = paths["COMPRESSED_DATA_PATH"]
+utils.check_data_paths(COMPRESSED_DATA_PATH)
+
 SAMPLE_SUBMISSION_PATH = paths["SAMPLE_SUBMISSION_PATH"]
 if not os.path.isfile(SAMPLE_SUBMISSION_PATH):
     raise ValueError('no sample submission file')

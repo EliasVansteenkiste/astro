@@ -108,6 +108,7 @@ start_time = time.time()
 prev_time = start_time
 tmp_losses_train = []
 losses_train_print = []
+losses_time_print = []
 
 # use buffering.buffered_gen_threaded()
 for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buffering.buffered_gen_threaded(
@@ -124,14 +125,16 @@ for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buff
 
     # make nbatches_chunk iterations
     for b in xrange(config().nbatches_chunk):
+        losses_time_print.append(time.time())
         loss, pred = iter_train(b)
         #print loss, pred 
         tmp_losses_train.append(loss)
         losses_train_print.append(loss)
 
     if (chunk_idx + 1) % 10 == 0:
-        print 'Chunk %d/%d' % (chunk_idx + 1, config().max_nchunks), np.mean(losses_train_print)
+        print 'Chunk %d/%d %.1fHz' % (chunk_idx + 1, config().max_nchunks,10.*config().nbatches_chunk * config().batch_size/(time.time()-losses_time_print[0]) ), np.mean(losses_train_print)
         losses_train_print = []
+        losses_time_print = []
 
     if ((chunk_idx + 1) % config().validate_every) == 0:
         print
@@ -143,6 +146,7 @@ for chunk_idx, (x_chunk_train, y_chunk_train, id_train) in izip(chunk_idxs, buff
         tmp_losses_train = []
 
         # load validation data to GPU
+
         tmp_losses_valid = []
         for i, (x_chunk_valid, y_chunk_valid, ids_batch) in enumerate(
                 buffering.buffered_gen_threaded(valid_data_iterator.generate(),
