@@ -12,7 +12,7 @@ def _test_read_image():
     for img_id in img_ids:
         print read_image('train', img_id).shape
 
-def read_image(dataset, id):
+def read_image(dataset, id, n_channels = 2):
     if dataset == 'train':
         prefix = 'train-csv/'
     elif dataset == 'test':
@@ -24,13 +24,13 @@ def read_image(dataset, id):
     i_data = pd.read_csv(csv_i_path)
     g_data = pd.read_csv(csv_g_path)
     
-    image = np.zeros((2, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
+    image = np.zeros((n_channels, i_data.shape[0],i_data.shape[1]),dtype=np.float32)
     image[0] = i_data
-    image[1] = g_data
-    print 'image.shape', image.shape
+    if n_channels==2:
+        image[1] = g_data
     return image
 
-def get_pd_labels(dataset = 'sample'):
+def get_pd_labels(dataset = 'train'):
 	df = pd.read_csv(pathfinder.DATA_PATH+dataset+'.csv', sep=';')
 	return df
 
@@ -39,7 +39,7 @@ def get_d_labels():
 	return d_label
 
 def _test_get_labels():
-	print get_pd_labels().describe()
+	print get_pd_labels('train').describe()
 
 def temporary_get_img_ids():
 	filenames =  os.listdir(pathfinder.DATA_PATH+'train-csv')
@@ -117,16 +117,32 @@ def make_stratified_split(no_folds=5, verbose=False):
 	return folds
 
 
+def get_bad_img_ids():
+    bad_img_ids = []
+    for line in open('bad_img_ids.lst') :
+        bad_img_ids.append(int(line.split(';')[0]))
+    return bad_img_ids
 
 
 
 if __name__ == "__main__":
-	_test_read_image()
-    # print temporary_get_img_ids()
-    # folds = make_random_split(temporary_get_img_ids())
-    # print len(folds)
-    # for f in folds:
-    # 	print f
-    #make_stratified_split(verbose=True)
-    #_test_get_labels()
+    bad_img_ids = get_bad_img_ids()
+    d_labels = get_d_labels()
+
+    masses = []
+    errors = []
+    distances = []
+    for img_id, lv in d_labels.iteritems():
+        if img_id not in bad_img_ids:
+            masses.append(lv[0])
+            errors.append(lv[1])
+            distances.append(lv[2])
+
+    print 'mass', np.amin(masses), np.amax(masses), np.average(masses)
+    print 'errors', np.amin(errors), np.amax(errors), np.average(errors)
+    print 'distances', np.amin(distances), np.amax(distances), np.average(distances)
+
+
+
+
 
